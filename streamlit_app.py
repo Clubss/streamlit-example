@@ -1,40 +1,35 @@
-import altair as alt
-import numpy as np
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-"""
-# Welcome to Streamlit!
+st.write("# Dashboard für: Data Science & Visualisierung")
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:.
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+df = pd.read_csv("capitalbikeshare-complete.csv") 
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+st.write(df)
 
-num_points = st.slider("Number of points in spiral", 1, 10000, 1100)
-num_turns = st.slider("Number of turns in spiral", 1, 300, 31)
+tab1, tab2, tab3 = st.tabs(["Häufigkeit der Wetterbedingungen", "Fahrradverleih nach Wetterbedingungen", "Fahrradverleih an Werktagen vs Wochenende"])
 
-indices = np.linspace(0, 1, num_points)
-theta = 2 * np.pi * num_turns * indices
-radius = indices
+with tab1:
+  
+    weather_counts = df['weather_main'].value_counts()
 
-x = radius * np.cos(theta)
-y = radius * np.sin(theta)
+    plt.figure(figsize=(6, 6))
+    bars = sns.barplot(x=weather_counts.values, y=weather_counts.index)
 
-df = pd.DataFrame({
-    "x": x,
-    "y": y,
-    "idx": indices,
-    "rand": np.random.randn(num_points),
-})
+    plt.xlim(0, max(weather_counts.values) * 1.13)
 
-st.altair_chart(alt.Chart(df, height=700, width=700)
-    .mark_point(filled=True)
-    .encode(
-        x=alt.X("x", axis=None),
-        y=alt.Y("y", axis=None),
-        color=alt.Color("idx", legend=None, scale=alt.Scale()),
-        size=alt.Size("rand", legend=None, scale=alt.Scale(range=[1, 150])),
-    ))
+    for bar in bars.patches:
+        plt.text(
+            bar.get_width(),
+            bar.get_y() + bar.get_height() / 2,
+            f'{int(bar.get_width())}',
+            va='center',
+        )
+
+    plt.title("Häufigkeit der Wetterbedingungen", fontsize=12, fontweight='bold')
+    plt.xlabel('Wie oft ist dieses Wetter aufgetreten?', fontweight='bold')
+    plt.ylabel('Wetterbedingungen', fontweight='bold')
+
+    st.pyplot(plt)
