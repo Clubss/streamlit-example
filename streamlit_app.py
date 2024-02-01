@@ -10,7 +10,7 @@ df = pd.read_csv("capitalbikeshare-complete.csv")
 
 st.write(df)
 
-# Definieren Sie eine Liste von 11 Farben
+
 line_colors = ['red', 'blue', 'green', 'yellow', 'black', 'purple', 'orange', 'lime', 'darkgray', 'pink', 'cyan']
 
 tab1, tab2, tab3 = st.tabs(["Häufigkeit der Wetterbedingungen", "Fahrradverleih nach Wetterbedingungen", "Fahrradverleih an Werktagen vs Wochenende"])
@@ -42,26 +42,55 @@ with tab2:
     df['datetime'] = pd.to_datetime(df['datetime'])
     df['year'] = df['datetime'].dt.year
 
-    # Daten nach Jahr und Wetterbedingung gruppieren und die Gesamtanzahl der Ausleihen berechnen
+    
     weather_yearly = df.groupby(['year', 'weather_main'])['count'].sum().reset_index()
 
-    # Funktion, um die Y-Achsen-Werte in Millionen umzuwandeln
+    
     def millions_formatter(x, pos):
         return f'{x / 1e6} Mio'
 
-    # Liniendiagramm erstellen und die Farben aus der Liste zuweisen
+    
     plt.figure(figsize=(6, 6))
     sns.lineplot(data=weather_yearly, x='year', y='count', hue='weather_main', palette=line_colors)
 
     plt.title('Jährliche Fahrradausleihen nach Wetterbedingung', fontweight="bold")
     plt.xlabel('Jahr', fontweight="bold")
     plt.ylabel('Gesamtanzahl der Ausleihen in Millionen', fontweight="bold")
-    plt.xticks(df['year'].unique())  # Stellt sicher, dass alle Jahre auf der X-Achse erscheinen
+    plt.xticks(df['year'].unique())  
     plt.legend(title='Wetterbedingung', loc='best', fontsize=9)
 
-    # Setzen des Formatters für die Y-Achse
+    
     formatter = FuncFormatter(millions_formatter)
     plt.gca().yaxis.set_major_formatter(formatter)
 
-    plt.tight_layout()  # Passt das Layout an, so dass alles in die Figur passt
+    plt.tight_layout()  
     st.pyplot(plt)
+with tab3:
+    st.write("## Waren am Wochenende oder an Werktagen mehr Leihfahrräder unterwegs?")
+
+    # Datums-/Zeitspalte in datetime umwandeln und den Wochentag extrahieren
+    df['datetime'] = pd.to_datetime(df['datetime'])
+    df['day_of_week'] = df['datetime'].dt.dayofweek
+    df['weekend'] = df['day_of_week'].apply(lambda x: 'Wochenende' if x >= 5 else 'Werktag')
+
+    # Daten aggregieren
+    weekend_counts = df.groupby('weekend')['count'].sum()
+
+    # Funktion zum Anzeigen von Prozentsatz und absoluten Werten in Millionen
+    def make_autopct(values):
+        def my_autopct(pct):
+            total = sum(values)
+            val_in_millions = total / 1e6  # Umwandlung in Millionen
+            val = pct*val_in_millions/100.0  # Berechnung des Werts für das Segment
+            return f'{pct:.1f}%\n({val:.2f} Mio. Fahrräder ausgeliehen)'
+        return my_autopct
+
+    # Kreisdiagramm
+    plt.figure(figsize=(6, 6))
+    plt.pie(weekend_counts, labels=weekend_counts.index, autopct=make_autopct(weekend_counts.values), 
+            colors=['lightblue', 'lightgreen'], startangle=140)
+    plt.title("Anteil der Fahrradausleihen an Wochenenden vs. Werktagen", fontweight="bold")
+    st.pyplot(plt)
+
+
+    
