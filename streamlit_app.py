@@ -4,7 +4,21 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.ticker import FuncFormatter
 
-st.write("# Dashboard für: Data Science & Visualisierung")
+
+st.markdown("""
+# Willkommen zu meinem Dashboard: Data Science & Visualisierung
+
+Im Rahmen meines Universitätsmoduls für Data Science und Visualisierung präsentiere ich dieses interaktive Dashboard, das Einblicke in die Nutzung von Leihfahrrädern bietet. Ziel ist es, durch Datenvisualisierung komplexe Muster verständlich zu machen.
+
+## Überblick:
+- **Balkendiagramm**: Analysiert die Häufigkeit verschiedener Wetterbedingungen.
+- **Liniendiagramm**: Zeigt die Fahrradausleihen über die Jahre hinweg.
+- **Kreisdiagramm**: Vergleicht die Ausleihen an Wochenenden und Werktagen.
+- **Streudiagramm**: Untersucht den Einfluss der Windgeschwindigkeit.
+- **Liniendiagramm für Tageszeiten**: Betrachtet die Ausleihen zu verschiedenen Tageszeiten.
+
+""", unsafe_allow_html=True)
+
 
 df = pd.read_csv("capitalbikeshare-complete.csv") 
 
@@ -16,9 +30,10 @@ max_wind_speed = df['wind_speed'].max()
 
 line_colors = ['red', 'blue', 'green', 'yellow', 'black', 'purple', 'orange', 'lime', 'darkgray', 'pink', 'cyan']
 
-tab1, tab2, tab3, tab4= st.tabs(["Balkendiagramm", "Liniendiagramm", 
+tab1, tab2, tab3, tab4, tab5= st.tabs(["Balkendiagramm", "Liniendiagramm", 
                                  "Kreisdiagramm", 
-                                 "Streudiagramm"])
+                                 "Streudiagramm",
+                                 "Liniendiagramm"])
 
 with tab1:
   
@@ -26,7 +41,7 @@ with tab1:
   
     weather_counts = df['weather_main'].value_counts()
 
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(5, 5))
     bars = sns.barplot(x=weather_counts.values, y=weather_counts.index, palette=line_colors[:len(weather_counts)])
 
     plt.xlim(0, max(weather_counts.values) * 1.13)
@@ -40,7 +55,7 @@ with tab1:
         )
 
     plt.title("Häufigkeit der Wetterbedingungen", fontsize=12, fontweight='bold')
-    plt.xlabel('Wie oft ist dieses Wetter aufgetreten?', fontweight='bold')
+    plt.xlabel('Gesamtanzahl wie häufig das Wetter aufgetreten ist', fontweight='bold')
     plt.ylabel('Wetterbedingungen', fontweight='bold')
 
     st.pyplot(plt)
@@ -66,7 +81,7 @@ with tab2:
         return f'{x / 1e6:.2f} Mio.'
 
     # Liniendiagramm für den ausgewählten Jahresbereich zeichnen
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(5, 5))
     sns.lineplot(data=weather_yearly, x='year', y='count', hue='weather_main', palette=line_colors)
     plt.title('Jährliche Fahrradausleihen nach Wetterbedingung', fontweight="bold")
     plt.xlabel('Jahr', fontweight="bold")
@@ -102,7 +117,7 @@ with tab3:
         return my_autopct
 
     # Kreisdiagramm
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(5, 5))
     plt.pie(weekend_counts, labels=weekend_counts.index, autopct=make_autopct(weekend_counts.values), 
             colors=['lightblue', 'lightgreen'], startangle=140)
     plt.title("Anteil der Fahrradausleihen an Wochenenden vs. Werktagen", fontweight="bold")
@@ -124,14 +139,41 @@ with tab4:
     wind_speed_counts = filtered_data.groupby('wind_speed')['count'].mean().reset_index()
 
     # Scatter-Plot mit gefilterten Daten
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(5, 5))
     sns.scatterplot(data=wind_speed_counts, x='wind_speed', y='count', color='blue')
     plt.title('Einfluss der Windgeschwindigkeit auf Fahrradausleihen', fontweight="bold")
     plt.xlabel('Windgeschwindigkeit (m/s)', fontweight="bold")
     plt.ylabel('Durchschnittliche Anzahl der Ausleihen', fontweight="bold")
     plt.tight_layout()
     st.pyplot(plt)
-
-
-
     
+with tab5:
+    st.write("## Durchschnittliche Fahrradausleihen nach Tageszeit")
+
+    # Tage der Woche für die Auswahl vorbereiten
+    days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    # Streamlit verwendet englische Namen für die Tage der Woche im datetime-Format
+    selected_days = st.multiselect('Wählen Sie die Tage der Woche aus:', days_of_week, default=days_of_week)
+
+    # Filtern der Daten basierend auf der Auswahl
+    # Zuerst den Wochentag als Namen in eine neue Spalte extrahieren
+    df['day_of_week_name'] = df['datetime'].dt.day_name()
+    # Daten basierend auf den ausgewählten Tagen filtern
+    filtered_data = df[df['day_of_week_name'].isin(selected_days)]
+
+    # Stundeninformation aus 'datetime' extrahieren
+    filtered_data['hour'] = filtered_data['datetime'].dt.hour
+
+    # Daten nach Stunde gruppieren und die durchschnittliche Anzahl der Ausleihen berechnen
+    hourly_counts = filtered_data.groupby('hour')['count'].mean().reset_index()
+
+    # Liniendiagramm für die durchschnittlichen Ausleihen nach Tageszeit erstellen
+    plt.figure(figsize=(9, 5))
+    sns.lineplot(data=hourly_counts, x='hour', y='count', marker="o")
+    plt.title('Durchschnittliche Fahrradausleihen nach Tageszeit für ausgewählte Tage', fontweight='bold')
+    plt.xlabel('Stunde des Tages', fontweight='bold')
+    plt.ylabel('Durchschnittliche Anzahl der Ausleihen', fontweight='bold')
+    plt.xticks(range(0, 24))
+    plt.grid(True)
+    plt.tight_layout()
+    st.pyplot(plt)
