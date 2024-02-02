@@ -30,6 +30,8 @@ max_wind_speed = df['wind_speed'].max()
 
 line_colors = ['red', 'blue', 'green', 'yellow', 'black', 'purple', 'orange', 'lime', 'darkgray', 'pink', 'cyan']
 
+
+
 tab1, tab2, tab3, tab4, tab5= st.tabs(["Balkendiagramm", "Liniendiagramm", 
                                  "Kreisdiagramm", 
                                  "Streudiagramm",
@@ -63,24 +65,22 @@ with tab1:
 with tab2:
     st.write("## Bei welchen Wetterbedingungen wurden die meisten Fahrräder ausgeliehen?")
     
-    # Konvertierung der 'datetime' Spalte und Erstellung einer 'year' Spalte, falls noch nicht geschehen
+    
     if 'year' not in df:
         df['datetime'] = pd.to_datetime(df['datetime'])
         df['year'] = df['datetime'].dt.year
 
-    # Erstellung von zwei Auswahlboxen für das Start- und Endjahr
+    
     start_year = st.selectbox('Wählen Sie das Startjahr:', sorted(df['year'].unique()), index=0)
     end_year = st.selectbox('Wählen Sie das Endjahr:', sorted(df['year'].unique()), index=len(df['year'].unique())-1)
 
-    # Filtern der Daten basierend auf dem ausgewählten Jahresbereich
+    
     filtered_yearly_data = df[(df['year'] >= start_year) & (df['year'] <= end_year)]
     weather_yearly = filtered_yearly_data.groupby(['year', 'weather_main'])['count'].sum().reset_index()
 
-    # Definieren der millions_formatter Funktion innerhalb von tab2
     def millions_formatter(x, pos):
         return f'{x / 1e6:.2f} Mio.'
 
-    # Liniendiagramm für den ausgewählten Jahresbereich zeichnen
     plt.figure(figsize=(5, 5))
     sns.lineplot(data=weather_yearly, x='year', y='count', hue='weather_main', palette=line_colors)
     plt.title('Jährliche Fahrradausleihen nach Wetterbedingung', fontweight="bold")
@@ -89,7 +89,6 @@ with tab2:
     plt.xticks(sorted(filtered_yearly_data['year'].unique()))
     plt.legend(title='Wetterbedingung', loc='best', fontsize=9)
 
-    # Formatter für die Y-Achse anwenden
     plt.gca().yaxis.set_major_formatter(FuncFormatter(millions_formatter))
 
     plt.tight_layout()
@@ -99,15 +98,12 @@ with tab2:
 with tab3:
     st.write("## Waren am Wochenende oder an Werktagen mehr Leihfahrräder unterwegs?")
 
-    # Datums-/Zeitspalte in datetime umwandeln und den Wochentag extrahieren
     df['datetime'] = pd.to_datetime(df['datetime'])
     df['day_of_week'] = df['datetime'].dt.dayofweek
     df['weekend'] = df['day_of_week'].apply(lambda x: 'Wochenende' if x >= 5 else 'Werktag')
 
-    # Daten aggregieren
     weekend_counts = df.groupby('weekend')['count'].sum()
 
-    # Funktion zum Anzeigen von Prozentsatz und absoluten Werten in Millionen
     def make_autopct(values):
         def my_autopct(pct):
             total = sum(values)
@@ -116,7 +112,6 @@ with tab3:
             return f'{pct:.1f}%\n({val:.2f} Mio. Fahrräder ausgeliehen)'
         return my_autopct
 
-    # Kreisdiagramm
     plt.figure(figsize=(5, 5))
     plt.pie(weekend_counts, labels=weekend_counts.index, autopct=make_autopct(weekend_counts.values), 
             colors=['lightblue', 'lightgreen'], startangle=140)
@@ -126,7 +121,6 @@ with tab3:
 with tab4:
     st.write("## Beeinflussen die Windbedingungen den Fahrradausleih?")
 
-    # Slider für Benutzer, um den Bereich der Windgeschwindigkeit zu wählen
     wind_speed_range = st.slider(
         'Wählen Sie den Windgeschwindigkeitsbereich:',
         min_value=min_wind_speed,
@@ -134,11 +128,9 @@ with tab4:
         value=(min_wind_speed, max_wind_speed)
     )
     
-    # Daten basierend auf Slider-Auswahl filtern
     filtered_data = df[(df['wind_speed'] >= wind_speed_range[0]) & (df['wind_speed'] <= wind_speed_range[1])]
     wind_speed_counts = filtered_data.groupby('wind_speed')['count'].mean().reset_index()
 
-    # Scatter-Plot mit gefilterten Daten
     plt.figure(figsize=(5, 5))
     sns.scatterplot(data=wind_speed_counts, x='wind_speed', y='count', color='blue')
     plt.title('Einfluss der Windgeschwindigkeit auf Fahrradausleihen', fontweight="bold")
@@ -150,24 +142,18 @@ with tab4:
 with tab5:
     st.write("## Durchschnittliche Fahrradausleihen nach Tageszeit")
 
-    # Tage der Woche für die Auswahl vorbereiten
     days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    # Streamlit verwendet englische Namen für die Tage der Woche im datetime-Format
+    
     selected_days = st.multiselect('Wählen Sie die Tage der Woche aus:', days_of_week, default=days_of_week)
 
-    # Filtern der Daten basierend auf der Auswahl
-    # Zuerst den Wochentag als Namen in eine neue Spalte extrahieren
     df['day_of_week_name'] = df['datetime'].dt.day_name()
-    # Daten basierend auf den ausgewählten Tagen filtern
+
     filtered_data = df[df['day_of_week_name'].isin(selected_days)]
 
-    # Stundeninformation aus 'datetime' extrahieren
     filtered_data['hour'] = filtered_data['datetime'].dt.hour
 
-    # Daten nach Stunde gruppieren und die durchschnittliche Anzahl der Ausleihen berechnen
     hourly_counts = filtered_data.groupby('hour')['count'].mean().reset_index()
 
-    # Liniendiagramm für die durchschnittlichen Ausleihen nach Tageszeit erstellen
     plt.figure(figsize=(9, 5))
     sns.lineplot(data=hourly_counts, x='hour', y='count', marker="o")
     plt.title('Durchschnittliche Fahrradausleihen nach Tageszeit für ausgewählte Tage', fontweight='bold')
