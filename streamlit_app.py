@@ -22,8 +22,6 @@ Im Rahmen meines Universitätsmoduls für Data Science und Visualisierung präse
 
 df = pd.read_csv("capitalbikeshare-complete.csv") 
 
-st.write(df)
-
 min_wind_speed = df['wind_speed'].min()
 max_wind_speed = df['wind_speed'].max()
 
@@ -141,7 +139,7 @@ with tab4:
     st.pyplot(plt)
     
 with tab5:
-    st.write("## Gibt es bestimmte Tageszeiten zu denen Fahrräder besonders gern ausgeliehen werden?")
+    st.write("## Gibt es bestimmte Tageszeiten zu denen Fahrräder besonders gerne ausgeliehen werden?")
 
     days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     
